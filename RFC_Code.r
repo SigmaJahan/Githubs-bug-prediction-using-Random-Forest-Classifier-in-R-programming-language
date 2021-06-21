@@ -7,6 +7,7 @@
 #install.packages("caret") 
 #install.packages("ggplot2") 
 #install.packages("tidyr") 
+#install.packages ('ROCR')
 
 
 library('tidyr')
@@ -17,6 +18,7 @@ library('caTools')
 library('randomForest')
 library('caret')
 library('wordcloud')
+library('ROCR')
 
 #Loading data and joining the title and body of each sample
 train  <- jsonlite::fromJSON('C://Users//Lenovo//Documents//GitHub//Githubs-bug-prediction-using-Random-Forest-Classifier-using-R-language//data//embold_train.json')
@@ -92,9 +94,25 @@ trainSparse = subset(trainSparse, split==TRUE)
 valSparse = subset(trainSparse, split==FALSE)
 
 
-#model and evaluation
+# #model and evaluation
 RF_model = randomForest(label ~ ., data=trainSparse, ntree = 300, importance=TRUE)
 print(RF_model)
+
+#rf_model <-randomForest(label ~ ., data=trainSparse, ntree = 300, importance=TRUE)
+rf_prediction <- predict(RF_model, trainSparse, type = "prob")
+
+library(pROC)
+ROC_rf <- roc(trainSparse$label, rf_prediction[,2])
+
+ROC_rf_auc <- auc(ROC_rf)
+
+
+# plot ROC curves
+plot(ROC_rf, col = "green", main = "ROC For Random Forest (GREEN)")
+
+# print the performance of each model
+paste("Accuracy % of random forest: ", mean(test$label == round(rf_prediction[,2], digits = 0)))
+paste("Area under curve of random forest: ", ROC_rf_auc)
 
 # No. of nodes for the trees
 hist(treesize(RF_model),
